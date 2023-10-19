@@ -38,7 +38,7 @@ class TensorDock:
             "ram": 16,
             "storage": 50,
             "storage_class": "io1",
-            "os": "recnbChHr6rDC7uD3",
+            "os": "recvcExWca1Pac7V3",
             "location": "na-us-chi-1",
             "name": "ray_worker",
             """cloud_init""": """runcmd:

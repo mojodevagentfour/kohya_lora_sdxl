@@ -1,11 +1,11 @@
 from dagster import job, resource, op
-from GoogleDrive.DriveConnections import DriveConnection
 import paramiko
 from tensordock import TensorDock
 import sys
 import os
 import json
 import time
+
 
 
 @resource
@@ -63,8 +63,8 @@ def run_uploader_form(context, cread:dict):
     # command = "sudo apt install python3-pip -y; \
     #             pip3 install ultralytics; \
     #             pip3 install cleanvision;"
-    command = f"sudo docker run --gpus all --name my_container -d mojocreator/sdxl:0.1.1 tail -f /dev/null && \
-                sudo docker exec -it my_container python kohya_lora_sdxl_trainer_v1.py {order_number} dog vizsla && \
+    command = f"sudo docker run -v ~/.aws:/root/.aws --gpus all --name my_container -d mojocreator/sdxl:0.1.2 tail -f /dev/null && \
+                sudo docker exec -it my_container python kohya_lora_sdxl_trainer_v2.py {order_number} && \
                 sudo docker cp my_container:/root/content/drive/MyDrive/kohya-trainer/output/sdxl_lora/sdxl_lora.safetensors /home/user;" 
 
     try:

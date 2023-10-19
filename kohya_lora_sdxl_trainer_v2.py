@@ -1,15 +1,13 @@
 from huggingface_hub.utils import validate_repo_id, HfHubHTTPError
-from GoogleDrive.DriveConnections import DriveConnection
 from urllib.parse import urlparse, unquote
 from huggingface_hub import HfFileSystem
 from IPython.utils import capture
 from subprocess import getoutput
-from pathlib import Path
 
 import subprocess
 import requests
-import zipfile
-import shutil
+import base64
+import boto3
 import gdown
 import torch
 import json
@@ -153,13 +151,6 @@ def installation():
     prepare_environment()
 
 os.chdir('/root/')
-if len(sys.argv) != 4:
-    print("Usage: python kohya_lora_script_V2.py <order> <name> <breed>")
-    sys.exit(1)
-
-order_number = sys.argv[1]
-animal_type = sys.argv[2]
-breed = sys.argv[3]
 installation()
 
 os.chdir(root_dir)
@@ -330,7 +321,26 @@ download_sdxl_model()
 import os
 
 # %store -r
+os.chdir('/root/')
+if len(sys.argv) != 2:
+    print("Usage: python kohya_lora_script_V2.py <order>")
+    sys.exit(1)
 
+jobid = sys.argv[1]
+
+# Set up the S3 client
+s3: object = boto3.client("s3")
+bucket_name: str = "uploaderform-1"
+
+# # Get the object (file) from the S3 bucket
+response = s3.get_object(Bucket=bucket_name, Key=f"output/{jobid}/{jobid}_image_data.json")
+file_content = response["Body"].read()
+data = json.loads(file_content) # Load the content of the file as JSON
+
+# file = open("Input_kohya_lora.json")
+# data = json.load(file)
+# file.close()
+breed = data["images"][0]["breed"]
 train_data_dir = f"/root/content/LoRA/train_data/{breed}/"  # @param {'type' : 'string'}
 # %store train_data_dir
 
@@ -339,23 +349,12 @@ print(f"Your train data directory : {train_data_dir}")
 
 os.system("pip install portpicker")
 
-os.chdir('/root/')
-if len(sys.argv) != 4:
-    print("Usage: python kohya_lora_script_V2.py <order> <name> <breed>")
-    sys.exit(1)
+for image in data["images"]:
+    image_data = base64.b64decode(image["image_data"])
+    file_name = image["file_name"]
+    with open(f"{train_data_dir}/{file_name}", "wb") as image_file:
+        image_file.write(image_data)
 
-order_number = sys.argv[1]
-animal_type = sys.argv[2]
-breed = sys.argv[3]
-
-# order_number = options.order[0] 
-# animal_type = animal_type
-order_date = "2023-01-20"
-drive_connection = DriveConnection(order_number)
-
-DID_MANUALLY_UPLOAD = True
-
-drive_connection.download_files(folder_path=train_data_dir, folder_id="1lNkSscwxEfq5WcgnSX4o53qjlZqTbc0v")
 
 """# **III. Data Preprocessing**"""
 
