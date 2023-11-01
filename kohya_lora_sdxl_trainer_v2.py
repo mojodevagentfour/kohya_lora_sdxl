@@ -1177,3 +1177,12 @@ train_args = train(train_conf)
 
 os.chdir(repo_dir)
 os.system(f"accelerate launch {accelerate_args} sdxl_train_network.py {train_args}")
+
+
+# Save the results to the specified S3 bucket
+key = f"output/{jobid}/sdxl_lora.safetensors"
+file = "/root/content/drive/MyDrive/kohya-trainer/output/sdxl_lora/sdxl_lora.safetensors"
+s3 = boto3.client("s3")
+print("Model Uploading in S3...!!!")
+s3.upload_file(Filename=file, Bucket=bucket_name, Key=key)
+print("Successfully Uploaded in S3...!!!")

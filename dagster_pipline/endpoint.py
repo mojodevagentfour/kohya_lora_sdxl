@@ -1,10 +1,11 @@
 from pydantic import BaseModel
-from Dagster_pipline import generateuploader_form
+from celery_config import execute_pipeline
 from blacksheep import Application
 import pickle
 import os
 import json
 import base64
+import time
 
 
 app = Application()
@@ -17,6 +18,6 @@ class order_details(BaseModel):
 
 @post("/start/")
 async def run_pipline(data: order_details):   # Note: Using the Pydantic model directly
-    
-    result = generateuploader_form.execute_in_process(run_config={"resources": {"order_data": {"config": data.dict()}}})
-    return True
+    time.sleep(5)
+    execute_pipeline.delay(data.dict())
+    return {"status": "Order is placed, processing in the background."}

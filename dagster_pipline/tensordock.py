@@ -3,8 +3,12 @@ import requests
 import os
 import json
 import time
+import logging
 
 # TensorDock Core Cloud API Documentation: https://documenter.getpostman.com/view/10732984/UVC3j7Kz#intro
+# Setting up logging
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 class TensorDock:
     def __init__(self) -> None:
@@ -38,9 +42,9 @@ class TensorDock:
             "ram": 16,
             "storage": 50,
             "storage_class": "io1",
-            "os": "recvcExWca1Pac7V3",
+            "os": "recgaxMUMP6DzeRJY",
             "location": "na-us-chi-1",
-            "name": "ray_worker",
+            "name": "worker_node",
             """cloud_init""": """runcmd:
             - sudo docker login -u mojocreator -p dckr_pat_gYXAFOgplKc7Rgrz5p8Qk2KsHhE
             """,
@@ -52,11 +56,25 @@ class TensorDock:
             # - sudo apt-get update && sudo apt-get install -y git curl ffmpeg libsm6 libxext6 python3-pip
             # - sudo /usr/bin/pip3 install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
         deploy_req = requests.post(deploy_url, headers=headers, data=deploy_payload)
-        print(deploy_req.json(),"+===+++===="*10)
-        self.id = deploy_req.json()["server"]["id"]
-        self.ip = deploy_req.json()["server"]["ip"]
-        self.status = deploy_req.json()["success"]
-        return self.id, self.ip, self.status
+        # Check if status code is 200 (success) and content type is JSON
+        if deploy_req.status_code == 200 :
+            logger.info(deploy_req)
+
+            # print(deploy_req.json(),"+===+++===="*10)
+            self.id = deploy_req.json()["server"]["id"]
+            self.ip = deploy_req.json()["server"]["ip"]
+            self.status = deploy_req.json()["success"]
+            if self.status != True:
+                time.sleep(10)
+                self.deploy_server()
+            else:
+                return self.id, self.ip, self.status
+        else:
+            # Log the response for debugging
+            logger.info(f"Unexpected response:{deploy_req.text}")
+            time.sleep(10)
+            self.deploy_server()
+            # raise ValueError("Failed to deploy server.")
 
     def wait_until_deployed(self, _id, _ip):
         """
